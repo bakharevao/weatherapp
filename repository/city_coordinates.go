@@ -14,6 +14,7 @@ var ErrNotFound = errors.New("not found")
 type CityCoordinatesRepository interface {
 	GetCoordinates(ctx context.Context, city string) (types.Coordinates, error)
 	ListCities(ctx context.Context) ([]string, error)
+	UpsertCoordinates(ctx context.Context, city string, coords types.Coordinates) error
 }
 
 type cityCoordinatesRepository struct {
@@ -56,4 +57,19 @@ func (r *cityCoordinatesRepository) ListCities(ctx context.Context) ([]string, e
 		cities = append(cities, city)
 	}
 	return cities, rows.Err()
+}
+
+func (r *cityCoordinatesRepository) UpsertCoordinates(ctx context.Context, city string, coords types.Coordinates) error {
+	_, err := r.db.ExecContext(ctx, `
+		INSERT INTO city_coordinates (city, latitude, longitude)
+		VALUES (?, ?, ?)
+		ON DUPLICATE KEY UPDATE
+			latitude = VALUES(latitude),
+			longitude = VALUES(longitude)`,
+		strings.ToLower(city), coords.Lat, coords.Lon,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to upsert coordinates: %w", err)
+	}
+	return nil
 }

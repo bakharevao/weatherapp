@@ -18,7 +18,10 @@ import (
 	"weatherapp/service"
 )
 
-const openMeteoBaseURL = "https://api.open-meteo.com/v1/forecast"
+const (
+	openMeteoBaseURL          = "https://api.open-meteo.com/v1/forecast"
+	openMeteoGeocodingBaseURL = "https://geocoding-api.open-meteo.com/v1/search"
+)
 
 func main() {
 	logger := logrus.New()
@@ -40,7 +43,8 @@ func main() {
 
 	cityCoordinatesRepository := repository.NewCityCoordinatesRepository(db)
 	weatherProvider := provider.NewOpenMeteoProvider(openMeteoBaseURL, cityCoordinatesRepository)
-	weatherService := service.NewWeatherService(weatherProvider, cityCoordinatesRepository, 5*time.Second)
+	geocodingProvider := provider.NewGeocodingProvider(openMeteoGeocodingBaseURL)
+	weatherService := service.NewWeatherService(weatherProvider, geocodingProvider, cityCoordinatesRepository, 5*time.Second)
 
 	if token := os.Getenv("TELEGRAM_BOT_TOKEN"); token != "" {
 		bot, err := tgbotapi.NewBotAPI(token)

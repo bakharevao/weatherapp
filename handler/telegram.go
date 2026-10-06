@@ -18,7 +18,7 @@ func HandleTelegramUpdate(ctx context.Context, weatherService service.WeatherSer
 	}
 
 	if update.Message.IsCommand() && update.Message.Command() == "start" {
-		handleStart(ctx, weatherService, bot, logger, update.Message.Chat.ID)
+		handleStart(bot, logger, update.Message.Chat.ID)
 		return
 	}
 
@@ -43,28 +43,8 @@ func HandleTelegramUpdate(ctx context.Context, weatherService service.WeatherSer
 	reply(bot, logger, update.Message.Chat.ID, formatWeather(*stored))
 }
 
-func handleStart(ctx context.Context, weatherService service.WeatherService, bot *tgbotapi.BotAPI, logger *logrus.Logger, chatID int64) {
-	cities, err := weatherService.ListCities(ctx)
-	if err != nil || len(cities) == 0 {
-		reply(bot, logger, chatID, "Welcome! Send me a city name to get its weather.")
-		return
-	}
-
-	reply(bot, logger, chatID, fmt.Sprintf(
-		"Welcome! Ask me about the weather in one of these cities:\n%s",
-		strings.Join(capitalize(cities), "\n"),
-	))
-}
-
-func capitalize(cities []string) []string {
-	out := make([]string, len(cities))
-	for i, city := range cities {
-		if city == "" {
-			continue
-		}
-		out[i] = strings.ToUpper(city[:1]) + city[1:]
-	}
-	return out
+func handleStart(bot *tgbotapi.BotAPI, logger *logrus.Logger, chatID int64) {
+	reply(bot, logger, chatID, "Welcome! Ask me about the weather in one of the cities, for example '/weather Tokyo'")
 }
 
 func formatWeather(w types.StoreData) string {
